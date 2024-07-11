@@ -27,6 +27,3 @@ type Ant struct {
     AntID int
 }
 
-type Path struct {
-    Rooms []*Room
-}
