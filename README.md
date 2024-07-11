@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Lem-in
 Lem-in is a Go implementation of a program that finds the shortest path for ants to travel from a start room to an end room in a farm. The program reads a file containing the farm configuration, including the number of ants, room definitions, and links between rooms. It then finds the shortest path(s) and simulates the movement of ants along those paths.
 
@@ -82,3 +83,6 @@ functions/read.go: Contains functions for reading the farm configuration from a 
 functions/path.go: Contains functions for finding paths between the start and end rooms.
 functions/ants.go: Contains functions for simulating the movement of ants along the paths.
 functions/struct.go: Defines the structs used in the program.
+=======
+haha
+>>>>>>> refs/remotes/Hasan/main
