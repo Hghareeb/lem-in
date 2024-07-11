@@ -11,7 +11,7 @@ func MoveAnts(farm *Farm, paths [][]*Room) {
     antPaths := make([]int, numAnts)      // Tracks the path assigned to each ant
     antInRoom := make(map[*Room]int)      // Tracks which ant is in which room
 
-    // Assign paths to ants in a round-robin fashion
+    // Assign paths to ants in a round-robin fashion and track their positions on each path and their rooms 
     pathIndex := 0
     for i := 0; i < numAnts; i++ {
         antPaths[i] = pathIndex
