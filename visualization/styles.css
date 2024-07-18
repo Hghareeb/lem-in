@@ -1,0 +1,26 @@
+/* visualization/styles.css */
+#farm {
+    position: relative;
+    width: 800px;
+    height: 600px;
+    border: 1px solid black;
+  }
+  .room {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: gray;
+  }
+  .link {
+    position: absolute;
+    background-color: black;
+    height: 2px;
+  }
+  .ant {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: red;
+  }

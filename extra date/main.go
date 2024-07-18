@@ -1,3 +1,5 @@
+package functions
+/*
 func main() {
     filename := "example2.txt" // Replace with the path to your input file
 
@@ -13,3 +15,4 @@ func main() {
 
     // The rest of the code is not needed for testing FindAllPaths
 }
+/*

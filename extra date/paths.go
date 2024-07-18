@@ -1,5 +1,5 @@
-/*
 package functions
+/*
 
 import (
 	"errors"

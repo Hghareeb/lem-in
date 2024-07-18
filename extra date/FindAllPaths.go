@@ -1,5 +1,6 @@
 package functions
 
+/*
 import (
 	"errors"
 	"fmt"
@@ -65,3 +66,4 @@ func FindAllPaths(farm *Farm) ([]*Path, error) {
 
 	return allPaths, nil
 }
+/*
