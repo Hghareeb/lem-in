@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-    
 	if len(os.Args) < 2 {
 		log.Fatal("Please provide a filename as an argument")
 	}

@@ -10,52 +10,65 @@ func MoveAnts(farm *Farm, paths []*Path) {
 	numAnts := len(farm.Ants)
 	antPositions := make([]int, numAnts) // Tracks the position of each ant on its path
 	antPaths := make([]int, numAnts)     // Tracks the path assigned to each ant
-	roomOccupancy := make(map[string]int) // Tracks the current ant occupying each room
+	roomOccupancy := make(map[string]bool) // Tracks if a room is occupied
+
+	// Filter out skipped paths
+	validPaths := []*Path{}
+	for _, path := range paths {
+		if !path.Skip {
+			validPaths = append(validPaths, path)
+		}
+	}
 
 	// Sort paths by their lengths (shortest first) to distribute ants evenly
-	sort.Slice(paths, func(i, j int) bool {
-		return len(paths[i].Rooms) < len(paths[j].Rooms)
+	sort.Slice(validPaths, func(i, j int) bool {
+		return len(validPaths[i].Rooms) < len(validPaths[j].Rooms)
 	})
 
-	// Calculate how many ants each path should get 
-	pathAntsCount := make([]int, len(paths))
+	// Calculate the optimal number of ants for each path
+	totalTurns := make([]int, len(validPaths))
 	for i := 0; i < numAnts; i++ {
-		minIndex := 0
-		minSteps := pathAntsCount[minIndex] + len(paths[minIndex].Rooms)
-		for j := 1; j < len(paths); j++ {
-			steps := pathAntsCount[j] + len(paths[j].Rooms)
-			if steps < minSteps {
-				minIndex = j
-				minSteps = steps
+		// Assign ants to paths in a way that balances the total turns across paths
+		minTurns := totalTurns[0] + len(validPaths[0].Rooms)
+		pathIndex := 0
+		for j := 1; j < len(validPaths); j++ {
+			turns := totalTurns[j] + len(validPaths[j].Rooms)
+			if turns < minTurns {
+				minTurns = turns
+				pathIndex = j
 			}
 		}
-		pathAntsCount[minIndex]++
-		antPaths[i] = minIndex
+		totalTurns[pathIndex] += len(validPaths[pathIndex].Rooms)
+		antPaths[i] = pathIndex
 	}
-    // Here is a reference snippet of code from extra date/ant2.go:
+
 	for step := 0; ; step++ {
 		movements := []string{}
 		allFinished := true
-		roomOccupancy = make(map[string]int) // Reset room occupancy each turn
+		roomOccupancy = make(map[string]bool) // Reset room occupancy each turn
 
 		for antIndex := 0; antIndex < numAnts; antIndex++ {
-			path := paths[antPaths[antIndex]].Rooms
+			path := validPaths[antPaths[antIndex]].Rooms
 			currentPos := antPositions[antIndex]
-            
+
 			if currentPos < len(path)-1 {
 				nextRoom := path[currentPos+1]
 
 				// Check if the next room is free (or is the end room)
-				if roomOccupancy[nextRoom.RoomName] == 0 || nextRoom.RoomName == farm.EndRoom.RoomName {
+				if !roomOccupancy[nextRoom.RoomName] || nextRoom.RoomName == farm.EndRoom.RoomName {
 					// Move the ant to the next room
 					antPositions[antIndex]++
 					movements = append(movements, fmt.Sprintf("L%d-%s", antIndex+1, nextRoom.RoomName))
-					roomOccupancy[nextRoom.RoomName] = antIndex + 1
+					roomOccupancy[nextRoom.RoomName] = true
+					if currentPos > 0 {
+						// Free the previous room
+						roomOccupancy[path[currentPos].RoomName] = false
+					}
 					allFinished = false
 				}
 			}
 		}
-        
+
 		if allFinished {
 			break
 		}

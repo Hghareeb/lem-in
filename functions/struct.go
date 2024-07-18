@@ -26,4 +26,3 @@ type Farm struct {
 type Ant struct {
     AntID int
 }
-
