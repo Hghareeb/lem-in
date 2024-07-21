@@ -1,0 +1,3 @@
+Running test: examples_run/badexample01.txt
+FAIL: examples_run/badexample01.txt (Expected error message)
+

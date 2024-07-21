@@ -10,7 +10,6 @@ import (
 
 // ReadFile reads the farm configuration from a file and returns a Farm struct.
 func ReadFile(filename string) (*Farm, error) {
-	// Open the file for reading
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %v", err)
@@ -33,35 +32,53 @@ func ReadFile(filename string) (*Farm, error) {
 		farm.Ants[i] = &Ant{AntID: i + 1}
 	}
 
-	// Read rooms and links from the file line by line 
+	// Create a map to check for duplicate coordinates
+	coordsMap := make(map[string]bool)
+
+	// Read rooms and links from the file line by line
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line == "" {
 			continue
 		}
 
-		// Check for start room 
 		if line == "##start" {
 			if !scanner.Scan() {
 				return nil, fmt.Errorf("ERROR: invalid data format")
-			} 
-			farm.StartRoom = parseRoom(scanner.Text())
-			if farm.StartRoom == nil {
-				return nil, fmt.Errorf("ERROR: invalid data format")
 			}
-			farm.StartRoom.Start = true
-			farm.Rooms = append(farm.Rooms, farm.StartRoom)
-		} else if line == "##end" { // Check for end room
+			startRoom, err := parseRoom(scanner.Text())
+			if err != nil {
+				return nil, err
+			}
+			startRoom.Start = true
+			if coordsMap[fmt.Sprintf("%d,%d", startRoom.CoordX, startRoom.CoordY)] {
+				return nil, fmt.Errorf("ERROR: duplicate coordinates for rooms")
+			}
+			coordsMap[fmt.Sprintf("%d,%d", startRoom.CoordX, startRoom.CoordY)] = true
+			farm.StartRoom = startRoom
+			farm.Rooms = append(farm.Rooms, startRoom)
+		} else if line == "##end" {
 			if !scanner.Scan() {
 				return nil, fmt.Errorf("ERROR: invalid data format")
 			}
-			farm.EndRoom = parseRoom(scanner.Text())
-			if farm.EndRoom == nil {
-				return nil, fmt.Errorf("ERROR: invalid data format")
+			endRoom, err := parseRoom(scanner.Text())
+			if err != nil {
+				return nil, err
 			}
-			farm.EndRoom.End = true
-			farm.Rooms = append(farm.Rooms, farm.EndRoom)
-		} else if strings.Contains(line, "-") { // Check for links
+			endRoom.End = true
+			if coordsMap[fmt.Sprintf("%d,%d", endRoom.CoordX, endRoom.CoordY)] {
+				return nil, fmt.Errorf("ERROR: duplicate coordinates for rooms")
+			}
+			coordsMap[fmt.Sprintf("%d,%d", endRoom.CoordX, endRoom.CoordY)] = true
+			farm.EndRoom = endRoom
+			farm.Rooms = append(farm.Rooms, endRoom)
+		} else if strings.HasPrefix(line, "##") {
+			// Error on unrecognized sections starting with ##
+			return nil, fmt.Errorf("ERROR: invalid section %s", line)
+		} else if strings.HasPrefix(line, "#") {
+			// Skip lines starting with a single #
+			continue
+		} else if strings.Contains(line, "-") {
 			// Link definition
 			fields := strings.Split(line, "-")
 			if len(fields) != 2 {
@@ -80,21 +97,26 @@ func ReadFile(filename string) (*Farm, error) {
 			} else {
 				return nil, fmt.Errorf("ERROR: duplicate link between %s and %s", room1.RoomName, room2.RoomName)
 			}
-		} else { // Room definition 
-			room := parseRoom(line)
-			if room != nil {
-				farm.Rooms = append(farm.Rooms, room)
-			} else { 
-				return nil, fmt.Errorf("ERROR: invalid data format")
+		} else {
+			// Room definition
+			room, err := parseRoom(line)
+			if err != nil {
+				return nil, err
 			}
+			if coordsMap[fmt.Sprintf("%d,%d", room.CoordX, room.CoordY)] {
+				return nil, fmt.Errorf("ERROR: duplicate coordinates for rooms")
+			}
+			coordsMap[fmt.Sprintf("%d,%d", room.CoordX, room.CoordY)] = true
+			farm.Rooms = append(farm.Rooms, room)
 		}
 	}
-	// Check for errors during file reading 
+
+	// Check for errors during file reading
 	if err := scanner.Err(); err != nil {
 		return nil, fmt.Errorf("error reading file: %v", err)
 	}
 
-	// Ensure start and end rooms are defined 
+	// Ensure start and end rooms are defined
 	if farm.StartRoom == nil || farm.EndRoom == nil {
 		return nil, fmt.Errorf("ERROR: start or end room not defined")
 	}
@@ -102,30 +124,38 @@ func ReadFile(filename string) (*Farm, error) {
 	return farm, nil
 }
 
-// mustAtoi converts a string to an integer and panics if it fails
-func mustAtoi(s string) int {
+// mustAtoi converts a string to an integer and returns an error if it fails
+func mustAtoi(s string) (int, error) {
 	i, err := strconv.Atoi(s)
 	if err != nil {
-		panic(err)
+		return 0, fmt.Errorf("ERROR: invalid data format")
 	}
-	return i
+	return i, nil
 }
 
 // parseRoom parses a room definition from a string
-func parseRoom(line string) *Room {
+func parseRoom(line string) (*Room, error) {
 	fields := strings.Fields(line)
 	if len(fields) != 3 {
-		return nil
+		return nil, fmt.Errorf("ERROR: invalid data format")
 	}
 	roomName := fields[0]
 	if strings.HasPrefix(roomName, "L") || strings.HasPrefix(roomName, "#") || strings.Contains(roomName, " ") {
-		return nil
+		return nil, fmt.Errorf("ERROR: invalid data format")
+	}
+	coordX, err := mustAtoi(fields[1])
+	if err != nil {
+		return nil, err
+	}
+	coordY, err := mustAtoi(fields[2])
+	if err != nil {
+		return nil, err
 	}
 	return &Room{
 		RoomName: roomName,
-		CoordX:   mustAtoi(fields[1]),
-		CoordY:   mustAtoi(fields[2]),
-	}
+		CoordX:   coordX,
+		CoordY:   coordY,
+	}, nil
 }
 
 // findRoom finds a room by name in the farm

@@ -1,121 +1,135 @@
 document.addEventListener("DOMContentLoaded", function() {
     const visualizationContainer = document.getElementById("visualization-container");
     const pathsContainer = document.getElementById("paths-container");
+    const fileInput = document.getElementById("file-input");
+    const startButton = document.getElementById("start-button");
 
-    const rooms = [
-        { name: "start", col: 1, row: 6, type: "start" },
-        { name: "0", col: 4, row: 8 },
-        { name: "o", col: 6, row: 8 },
-        { name: "n", col: 6, row: 6 },
-        { name: "e", col: 8, row: 4 },
-        { name: "t", col: 1, row: 9 },
-        { name: "E", col: 5, row: 9 },
-        { name: "a", col: 8, row: 9 },
-        { name: "m", col: 8, row: 6 },
-        { name: "h", col: 4, row: 6 },
-        { name: "A", col: 5, row: 2 },
-        { name: "c", col: 8, row: 1 },
-        { name: "k", col: 11, row: 2 },
-        { name: "end", col: 11, row: 6, type: "end" }
-    ];
+    let ants = {};
+    let antMovements = [];
+    let rooms = [];
+    let links = [];
+    let numAnts = 0;
 
-    const links = [
-        { from: "start", to: "t" },
-        { from: "n", to: "e" },
-        { from: "a", to: "m" },
-        { from: "A", to: "c" },
-        { from: "0", to: "o" },
-        { from: "E", to: "a" },
-        { from: "k", to: "end" },
-        { from: "start", to: "h" },
-        { from: "o", to: "n" },
-        { from: "m", to: "end" },
-        { from: "t", to: "E" },
-        { from: "start", to: "0" },
-        { from: "h", to: "A" },
-        { from: "e", to: "end" },
-        { from: "c", to: "k" },
-        { from: "n", to: "m" },
-        { from: "h", to: "n" }
-    ];
+    fileInput.addEventListener("change", handleFileSelect);
 
-    // Draw rooms
-    rooms.forEach(room => {
-        const roomDiv = document.createElement("div");
-        roomDiv.className = "room";
-        if (room.type) {
-            roomDiv.classList.add(room.type);
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                parseFileContent(content);
+                createVisualization();
+                startButton.disabled = false;
+            };
+            reader.readAsText(file);
         }
-        roomDiv.style.gridColumn = room.col;
-        roomDiv.style.gridRow = room.row;
-        roomDiv.innerText = room.name;
-        roomDiv.id = room.name;
-        visualizationContainer.appendChild(roomDiv);
-    });
+    }
 
-    // Draw links using SVG
-    links.forEach(link => {
-        const fromRoom = document.getElementById(link.from);
-        const toRoom = document.getElementById(link.to);
+    function parseFileContent(content) {
+        const lines = content.split('\n').map(line => line.trim()).filter(line => line !== '');
+        let currentSection = 'ants';
 
-        const fromX = fromRoom.offsetLeft + fromRoom.offsetWidth / 2;
-        const fromY = fromRoom.offsetTop + fromRoom.offsetHeight / 2;
-        const toX = toRoom.offsetLeft + toRoom.offsetWidth / 2;
-        const toY = toRoom.offsetTop + toRoom.offsetHeight / 2;
+        rooms = [];
+        links = [];
+        antMovements = [];
 
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        path.setAttribute("x1", fromX);
-        path.setAttribute("y1", fromY);
-        path.setAttribute("x2", toX);
-        path.setAttribute("y2", toY);
-        path.classList.add("path");
+        lines.forEach(line => {
+            if (line.startsWith('##')) {
+                if (line === '##start' || line === '##end') {
+                    currentSection = line.substring(2);
+                } else {
+                    currentSection = 'rooms';
+                }
+            } else if (line.includes(' ')) {
+                const [name, col, row] = line.split(' ');
+                rooms.push({
+                    name,
+                    col: parseInt(col),
+                    row: parseInt(row),
+                    type: currentSection === 'start' ? 'start' : currentSection === 'end' ? 'end' : ''
+                });
+            } else if (line.includes('-')) {
+                const [from, to] = line.split('-');
+                links.push({ from, to });
+            } else if (!isNaN(parseInt(line))) {
+                numAnts = parseInt(line);
+                antMovements = Array.from({ length: numAnts }, (_, i) => [`L${i + 1}-start`]);
+            }
+        });
 
-        pathsContainer.appendChild(path);
-    });
+        // Assign dummy movements for testing
+        for (let i = 0; i < numAnts; i++) {
+            antMovements[i].push(`L${i + 1}-end`);
+        }
+    }
 
-    // Dynamic ant movements
-    const antMovements = [
-        ["L1-start", "L1-t", "L1-E", "L1-a", "L1-m", "L1-end"],
-        ["L2-start", "L2-h", "L2-A", "L2-c", "L2-k", "L2-end"],
-        ["L3-start", "L3-0", "L3-o", "L3-n", "L3-e", "L3-end"]
-    ];
+    function createVisualization() {
+        const container = document.getElementById('visualization-container');
+        container.innerHTML = ''; // Clear any existing visualization
+    
+        // Create a grid of cells for the rooms
+        rooms.forEach(room => {
+            const cell = document.createElement('div');
+            cell.style.gridRowStart = room.row;
+            cell.style.gridColumnStart = room.col;
+            cell.textContent = room.name;
+            cell.className = 'room ' + room.type; // Use the room type as a CSS class
+            container.appendChild(cell);
+        });
+    
+        // Create lines for the links
+        links.forEach(link => {
+            const fromRoom = rooms.find(room => room.name === link.from);
+            const toRoom = rooms.find(room => room.name === link.to);
+            const line = document.createElement('div');
+            line.style.gridRowStart = fromRoom.row;
+            line.style.gridColumnStart = fromRoom.col;
+            line.style.gridRowEnd = toRoom.row;
+            line.style.gridColumnEnd = toRoom.col;
+            line.className = 'link';
+            container.appendChild(line);
+        });
+    
+        // Create elements for the ants
+        antMovements.forEach((antMovement, i) => {
+            const ant = document.createElement('div');
+            const startRoom = rooms.find(room => room.name === antMovement[0].split('-')[1]);
+            ant.style.gridRowStart = startRoom.row;
+            ant.style.gridColumnStart = startRoom.col;
+            ant.textContent = 'L' + (i + 1);
+            ant.className = 'ant';
+            container.appendChild(ant);
+        });
+    }
 
-    const ants = {};
-
-    antMovements.forEach((movements, index) => {
-        const antId = movements[0].split('-')[0];
-        const initialRoomId = movements[0].split('-')[1];
-        const ant = document.createElement("div");
-        ant.className = "ant";
-        ant.id = antId;
-        document.getElementById(initialRoomId).appendChild(ant);
-        ants[antId] = { element: ant, movements: movements.slice(1), position: 0 };
-    });
-
-    document.getElementById("start-button").addEventListener("click", () => {
+    startButton.addEventListener("click", () => {
         let interval = setInterval(() => {
             let allFinished = true;
             Object.keys(ants).forEach(antId => {
                 const ant = ants[antId];
                 if (ant.position < ant.movements.length) {
                     allFinished = false;
-                    const currentRoomId = ant.movements[ant.position - 1]?.split('-')[1];
-                    const nextRoomId = ant.movements[ant.position].split('-')[1];
-                    const currentRoom = document.getElementById(currentRoomId);
-                    const nextRoom = document.getElementById(nextRoomId);
+                    const currentRoomId = ant.movements[ant.position].split('-')[1];
+                    const nextRoomId = ant.movements[ant.position + 1]?.split('-')[1];
 
-                    if (currentRoom) {
-                        currentRoom.classList.remove("occupied");
+                    if (nextRoomId) {
+                        const currentRoom = document.getElementById(currentRoomId);
+                        const nextRoom = document.getElementById(nextRoomId);
+
+                        if (currentRoom) {
+                            currentRoom.classList.remove("occupied");
+                        }
+
+                        nextRoom.appendChild(ant.element);
+                        nextRoom.classList.add("occupied");
+
+                        // Animate the path (line) between the rooms
+                        const path = pathsContainer.querySelector(`line[x1="${currentRoom.offsetLeft + currentRoom.offsetWidth / 2}"][y1="${currentRoom.offsetTop + currentRoom.offsetHeight / 2}"][x2="${nextRoom.offsetLeft + nextRoom.offsetWidth / 2}"][y2="${nextRoom.offsetTop + nextRoom.offsetHeight / 2}"]`);
+                        if (path) path.classList.add("active");
+
+                        ant.position++;
                     }
-
-                    nextRoom.appendChild(ant.element);
-                    nextRoom.classList.add("occupied");
-
-                    // Animate the path (line) between the rooms
-                    const path = pathsContainer.querySelector(`line[x1="${currentRoom.offsetLeft + currentRoom.offsetWidth / 2}"][y1="${currentRoom.offsetTop + currentRoom.offsetHeight / 2}"][x2="${nextRoom.offsetLeft + nextRoom.offsetWidth / 2}"][y2="${nextRoom.offsetTop + nextRoom.offsetHeight / 2}"]`);
-                    if (path) path.classList.add("active");
-
-                    ant.position++;
                 }
             });
             if (allFinished) {
@@ -124,3 +138,37 @@ document.addEventListener("DOMContentLoaded", function() {
         }, 1000);
     });
 });
+function parseFileContent(content) {
+    const lines = content.split('\n').map(line => line.trim()).filter(line => line !== '');
+    let currentSection = 'ants';
+
+    rooms = [];
+    links = [];
+    antMovements = [];
+
+    lines.forEach(line => {
+        if (line.startsWith('##')) {
+            if (line === '##start' || line === '##end') {
+                currentSection = line.slice(2);
+            }
+        } else {
+            switch (currentSection) {
+                case 'ants':
+                    numAnts = parseInt(line);
+                    currentSection = '';
+                    break;
+                case 'start':
+                case 'end':
+                case 'rooms':
+                    rooms.push(line);
+                    break;
+                case 'links':
+                    links.push(line);
+                    break;
+                default:
+                    antMovements.push(line);
+                    break;
+            }
+        }
+    });
+}

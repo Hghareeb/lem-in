@@ -40,14 +40,14 @@ func main() {
 		log.Fatalf("Error finding paths: %v", err)
 	}
 
-	fmt.Println("Found all possible paths:")
-	for i, path := range paths {
-		fmt.Printf("Path %d: ", i+1)
-		for _, room := range path.Rooms {
-			fmt.Printf("%s ", room.RoomName)
-		}
-		fmt.Println()
-	}
+	// fmt.Println("Found all possible paths:")
+	// for i, path := range paths {
+	// 	fmt.Printf("Path %d: ", i+1)
+	// 	for _, room := range path.Rooms {
+	// 		fmt.Printf("%s ", room.RoomName)
+	// 	}
+	// 	fmt.Println()
+	// }
 
 	fmt.Println("Moving ants:")
 	functions.MoveAnts(farm, paths)

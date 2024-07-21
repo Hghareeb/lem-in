@@ -1,0 +1,19 @@
+Running test: examples_run/example1.txt
+Farm loaded with 4 ants
+Rooms:
+0 0 3
+2 2 5
+3 4 0
+1 8 3
+Links:
+0-2
+2-3
+3-1
+Moving ants:
+[L1-2]
+[L1-3 L2-2]
+[L1-1 L2-3 L3-2]
+[L2-1 L3-3 L4-2]
+[L3-1 L4-3]
+[L4-1]
+
