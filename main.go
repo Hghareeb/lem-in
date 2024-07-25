@@ -1,54 +1,50 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"os"
-	"Lem-in/functions"
+    "Lem-in/functions"
+    "fmt"
+    "os"
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		log.Fatal("Please provide a filename as an argument")
-	}
+    if len(os.Args) != 2 {
+        fmt.Println("Usage: go run main.go <filename>")
+        return
+    }
 
-	filename := os.Args[1]
+    // Parse the colony from the input file
+    colony := functions.File(os.Args[1])
+    if colony == nil {
+        fmt.Println("Failed to parse colony from input file.")
+        return
+    }
 
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		log.Fatalf("File does not exist: %s", filename)
-	}
+    // Print the colony configuration (this echoes the input)
+    inputText := functions.PrintColonyConfiguration(colony)
+    fmt.Print(inputText)
+    fmt.Println()
 
-	farm, err := functions.ReadFile(filename)
-	if err != nil {
-		log.Fatalf("Error reading file: %v", err)
-	}
+    // Find all possible routes from start to end
+    routes := functions.Edmonds(colony)
+    if len(routes) == 0 {
+        fmt.Printf("ERROR: invalid data format\nNo path from start room to end room\n")
+        return
+    }
 
-	fmt.Printf("Farm loaded with %d ants\n", len(farm.Ants))
+    // Choose optimal routes
+    colony.Paths = functions.ChooseOptimalRoutes(routes, colony.TotalAnts)
 
-	fmt.Println("Rooms:")
-	for _, room := range farm.Rooms {
-		fmt.Printf("%s %d %d\n", room.RoomName, room.CoordX, room.CoordY)
-	}
+    // Distribute ants to routes
+    functions.DistributeAnts(colony)
 
-	fmt.Println("Links:")
-	for _, link := range farm.Links {
-		fmt.Printf("%s-%s\n", link.Room1.RoomName, link.Room2.RoomName)
-	}
+    // Simulate ant movements
+    movements := functions.SimulateAntsMovement(colony)
 
-	paths, err := functions.FindAllPaths(farm)
-	if err != nil {
-		log.Fatalf("Error finding paths: %v", err)
-	}
-
-	// fmt.Println("Found all possible paths:")
-	// for i, path := range paths {
-	// 	fmt.Printf("Path %d: ", i+1)
-	// 	for _, room := range path.Rooms {
-	// 		fmt.Printf("%s ", room.RoomName)
-	// 	}
-	// 	fmt.Println()
-	// }
-
-	fmt.Println("Moving ants:")
-	functions.MoveAnts(farm, paths)
+    // Print the movements
+    for _, move := range movements {
+        if move != "" {
+            fmt.Println(move)
+        }
+    }
+    fmt.Println("$")
 }
