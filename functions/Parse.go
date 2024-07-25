@@ -30,7 +30,7 @@ func File(filename string) *Colony {
 		}
 		lineNum++
 	}
-
+	// Read the rest of the file
 	for scanner.Scan() {
 		line := scanner.Text()
 		fields := strings.Fields(line)
@@ -51,7 +51,7 @@ func File(filename string) *Colony {
 		}
 		lineNum++
 	}
-
+	// Check for errors reading the file
 	if err := scanner.Err(); err != nil {
 		fmt.Println("ERROR: invalid data format, error reading file")
 		return nil
