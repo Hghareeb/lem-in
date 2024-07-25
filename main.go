@@ -30,6 +30,10 @@ func main() {
         fmt.Printf("ERROR: invalid data format\nNo path from start room to end room\n")
         return
     }
+    // Print all possible paths
+    for _, route := range routes {
+        fmt.Println(route)
+    }
 
     // Choose optimal routes
     colony.Paths = functions.ChooseOptimalRoutes(routes, colony.TotalAnts)
