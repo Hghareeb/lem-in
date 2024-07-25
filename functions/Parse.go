@@ -44,6 +44,8 @@ func File(filename string) *Colony {
 			room := NewRoom(line, lineNum)
 			if room != nil {
 				colony.Rooms = append(colony.Rooms, room)
+			} else {
+				return nil // Terminate if there's an error creating a room
 			}
 		default:
 			fmt.Printf("ERROR: invalid data format on line %d: %s\n", lineNum, line)
@@ -115,10 +117,8 @@ func NewRoom(line string, lineNum int) *Room {
 	coordY := fields[2]
 
 	// Validate coordinates
-	_, errX := strconv.Atoi(coordX)
-	_, errY := strconv.Atoi(coordY)
-	if errX != nil || errY != nil {
-		fmt.Printf("ERROR: invalid data format on line %d: %s\n", lineNum, line)
+	if !isNumber(coordX) || !isNumber(coordY) {
+		fmt.Printf("ERROR: invalid data format on line %d: coordinates must be numbers: %s\n", lineNum, line)
 		return nil
 	}
 
@@ -134,6 +134,12 @@ func NewRoom(line string, lineNum int) *Room {
 	}
 
 	return newRoom
+}
+
+// isNumber checks if a string is a valid number.
+func isNumber(str string) bool {
+	_, err := strconv.Atoi(str)
+	return err == nil
 }
 
 // NewLink creates a new link between two rooms from a line in the file.
