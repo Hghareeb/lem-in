@@ -9,7 +9,7 @@ func DistributeAnts(colony *Colony) {
         // Find the path with the least total "cost"
         minCost := len(colony.Paths[0].Rooms) + len(colony.Paths[0].Ants)
         minPath := colony.Paths[0]
-
+        // Iterate over the paths
         for _, path := range colony.Paths[1:] {
             cost := len(path.Rooms) + len(path.Ants)
             if cost < minCost {
