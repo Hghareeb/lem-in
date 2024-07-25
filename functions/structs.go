@@ -48,3 +48,4 @@ type Route struct {
     Steps    int
     Ants     []*Ant
 }
+//all good here
