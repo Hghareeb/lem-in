@@ -172,3 +172,4 @@ function parseFileContent(content) {
         }
     });
 }
+// doesnt work well
