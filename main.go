@@ -31,9 +31,9 @@ func main() {
         return
     }
     // Print all possible paths
-    for _, route := range routes {
-        fmt.Println(route)
-    }
+    //just to check
+    // for _, route := range routes {
+    // 	fmt.Println(route)
 
     // Choose optimal routes
     colony.Paths = functions.ChooseOptimalRoutes(routes, colony.TotalAnts)
