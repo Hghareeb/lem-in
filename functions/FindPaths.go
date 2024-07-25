@@ -115,7 +115,7 @@ func calculateSteps(routes []*Route, numAnts int) int {
             maxRouteLength = len(route.Rooms)
         }
     }
-
+    // The total number of steps is the sum of the number of ants and the length of the longest route minus 1.
     totalSteps, remainingAnts := 0, numAnts
     for remainingAnts > 0 {
         totalSteps++
